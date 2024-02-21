@@ -1,4 +1,8 @@
 # Databricks notebook source
+# MAGIC %run ../config/functions
+
+# COMMAND ----------
+
 dbutils.widgets.removeAll()
 dbutils.widgets.text("silver_job_table", "")
 dbutils.widgets.text("silver_hired_employees_table", "")
@@ -6,11 +10,17 @@ dbutils.widgets.text("silver_departments_table", "")
 dbutils.widgets.text("gold_employees_hired_by_quarter", "")
 dbutils.widgets.text("gold_departments_hired_above_mean", "")
 
-silver_job_table = dbutils.widgets.get("silver_job_table")
-silver_hired_employees_table = dbutils.widgets.get("silver_hired_employees_table")
-silver_departments_table = dbutils.widgets.get("silver_departments_table")
-gold_employees_hired_by_quarter = dbutils.widgets.get("gold_employees_hired_by_quarter")
-gold_departments_hired_above_mean = dbutils.widgets.get("gold_departments_hired_above_mean")
+dbutils.widgets.text("task_name", "")
+dbutils.widgets.text("log_table", "")
+
+silver_job_table = dbutils.widgets.get("silver_job_table").lower()
+silver_hired_employees_table = dbutils.widgets.get("silver_hired_employees_table").lower()
+silver_departments_table = dbutils.widgets.get("silver_departments_table").lower()
+gold_employees_hired_by_quarter = dbutils.widgets.get("gold_employees_hired_by_quarter").lower()
+gold_departments_hired_above_mean = dbutils.widgets.get("gold_departments_hired_above_mean").lower()
+
+task_name = dbutils.widgets.get("task_name")
+log_table = dbutils.widgets.get("log_table").lower()
 
 
 print(f'''
@@ -19,7 +29,18 @@ silver_hired_employees_table = {silver_hired_employees_table}
 silver_departments_table = {silver_departments_table}
 gold_employees_hired_by_quarter = {gold_employees_hired_by_quarter}
 gold_departments_hired_above_mean = {gold_departments_hired_above_mean}
+
+task_name = {task_name}
+log_table = {log_table}
 ''')
+
+# COMMAND ----------
+
+status = 'Success'
+error_msg = 'All run OK'
+start_date = return_actual_timestamp()
+source_count = 0
+target_count = 0
 
 # COMMAND ----------
 
@@ -30,40 +51,50 @@ gold_departments_hired_above_mean = {gold_departments_hired_above_mean}
 
 # COMMAND ----------
 
-query = f'''
-select
+if(status != 'ERROR'):
+    try:
 
-    department,
-    jobs,
-    sum(if(quarter == 1,1,0)) as Q1,
-    sum(if(quarter == 2,1,0)) as Q2,
-    sum(if(quarter == 3,1,0)) as Q3,
-    sum(if(quarter == 4,1,0)) as Q4
+        query = f'''
+        select
 
-from(
+            department,
+            jobs,
+            sum(if(quarter == 1,1,0)) as Q1,
+            sum(if(quarter == 2,1,0)) as Q2,
+            sum(if(quarter == 3,1,0)) as Q3,
+            sum(if(quarter == 4,1,0)) as Q4
 
-    select
-        h.*,
-        d.department,
-        j.jobs,
-        quarter(h.datetime) as quarter
-    from {silver_hired_employees_table} as h
-    inner join {silver_job_table} as j on h.job_id = j.id
-    inner join {silver_departments_table} as d on h.department_id = d.id
-    where h.job_id is not null
-)
+        from(
 
-where year(datetime) = '2021'
-group by department,jobs
-order by department,jobs asc
-'''
+            select
+                h.*,
+                d.department,
+                j.jobs,
+                quarter(h.datetime) as quarter
+            from {silver_hired_employees_table} as h
+            inner join {silver_job_table} as j on h.job_id = j.id
+            inner join {silver_departments_table} as d on h.department_id = d.id
+            where h.job_id is not null
+        )
 
-print(query)
+        where year(datetime) = '2021'
+        group by department,jobs
+        order by department,jobs asc
+        '''
 
-df = spark.sql(query)
+        print(query)
 
-print(df.count())
-df.write.mode("overwrite").insertInto(gold_employees_hired_by_quarter)
+        df = spark.sql(query)
+
+        source_count += df.count()
+
+        df.write.mode("overwrite").insertInto(gold_employees_hired_by_quarter)
+
+        target_count += df.count()
+
+    except Exception as e:
+        status = 'ERROR'
+        error_msg = 'Error in Query 1: '+str(e)
 
 # COMMAND ----------
 
@@ -74,51 +105,68 @@ df.write.mode("overwrite").insertInto(gold_employees_hired_by_quarter)
 
 # COMMAND ----------
 
-query = f'''
+if(status != 'ERROR'):
+    try:
 
-select
-*
-from(
-    select
-
-        department_id as id,
-        department,
-        count(*) as hired
-
-    from(
+        query = f'''
 
         select
-            h.*,
-            d.department
-        from {silver_hired_employees_table} as h
-        inner join {silver_departments_table} as d on h.department_id = d.id
-        where h.job_id is not null
+        *
+        from(
+            select
 
-    )
+                department_id as id,
+                department,
+                count(*) as hired
 
-    where year(datetime) = '2021'
-    group by department_id,department
-    order by hired desc
-)
-where hired > (
-    select
-        mean(count) as mean
-    from(
+            from(
 
-        select
-            department_id,
-            count(*) as count
-        from {silver_hired_employees_table}
-        where job_id is not null
-        group by department_id
+                select
+                    h.*,
+                    d.department
+                from {silver_hired_employees_table} as h
+                inner join {silver_departments_table} as d on h.department_id = d.id
+                where h.job_id is not null
 
-    )
-)
-'''
+            )
 
-print(query)
+            where year(datetime) = '2021'
+            group by department_id,department
+            order by hired desc
+        )
+        where hired > (
+            select
+                mean(count) as mean
+            from(
 
-df = spark.sql(query)
-print(df.count())
+                select
+                    department_id,
+                    count(*) as count
+                from {silver_hired_employees_table}
+                where job_id is not null and year(datetime) = '2021'
+                group by department_id
 
-df.write.mode("overwrite").insertInto(gold_departments_hired_above_mean)
+            )
+        )
+        '''
+
+        print(query)
+
+        df = spark.sql(query)
+
+        source_count += df.count()
+
+        df.write.mode("overwrite").insertInto(gold_departments_hired_above_mean)
+
+        target_count += df.count()
+
+    except Exception as e:
+        status = 'ERROR'
+        error_msg = 'Error in Query 2: '+str(e)
+
+# COMMAND ----------
+
+columns = ['task_name','status','error_msg','start_date','end_date','source_count','target_count']
+data = [(task_name,status,error_msg,start_date,return_actual_timestamp(),source_count,target_count)]
+
+insert_into_log(data,columns,log_table,status,error_msg)

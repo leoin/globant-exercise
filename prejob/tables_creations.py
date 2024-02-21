@@ -1,9 +1,8 @@
 # Databricks notebook source
 dbutils.widgets.removeAll()
 dbutils.widgets.text("hive_schema", "")
-hive_schema = dbutils.widgets.get("hive_schema")
 
-# COMMAND ----------
+hive_schema = dbutils.widgets.get("hive_schema")
 
 print(f'''
 hive_schema={hive_schema}
@@ -195,10 +194,11 @@ query = f"""
     CREATE TABLE IF NOT EXISTS {hive_schema}.gold.{table_name} (
         task_name STRING,
         status STRING,
+        error_msg STRING,
         start_date TIMESTAMP,
         end_date TIMESTAMP,
         source_count INT,
-        destiny_count INT
+        target_count INT
     )
     USING DELTA
 """.format(
