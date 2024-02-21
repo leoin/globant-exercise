@@ -23,3 +23,22 @@ def insert_into_log(data,columns,log_table,status,error_msg):
 
     if(status == 'ERROR'):
         assert False,error_msg
+
+# COMMAND ----------
+
+def get_last_record(df,window_spec):
+    df_temp = df.withColumn(
+        "row_number", 
+        f.row_number().over(window_spec)
+    ).where(
+        f.col("row_number") == 1
+    ).drop('row_number')
+
+    return df_temp
+
+# COMMAND ----------
+
+def insert_into_qc_table(data,columns,qc_table):
+    df_qc = spark.createDataFrame(data,columns)
+    df_qc.write.mode("append").insertInto(qc_table)
+    df_qc.display()

@@ -208,3 +208,41 @@ query = f"""
 
 print(query)
 spark.sql(query)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Create QC Table
+
+# COMMAND ----------
+
+table_name = 'qc_table'
+
+query = f"""
+    CREATE TABLE IF NOT EXISTS {hive_schema}.gold.{table_name} (
+        name_of_test string,
+        tables string,
+        time_of_test string,
+        results string,
+        conclusion string
+    )
+    USING DELTA
+""".format(
+    hive_schema=hive_schema,
+    table_name=table_name
+)
+
+print(query)
+spark.sql(query)
+
+# COMMAND ----------
+
+query = f"""
+    truncate table {hive_schema}.gold.{table_name}
+""".format(
+    hive_schema=hive_schema,
+    table_name=table_name
+)
+
+print(query)
+spark.sql(query)
