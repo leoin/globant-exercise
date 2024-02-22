@@ -1,4 +1,12 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC ## Prejob
+# MAGIC - Import functions
+# MAGIC - Get parameters
+# MAGIC - Define default values for the log
+
+# COMMAND ----------
+
 # MAGIC %run ../config/functions
 
 # COMMAND ----------
@@ -163,6 +171,11 @@ if(status != 'ERROR'):
     except Exception as e:
         status = 'ERROR'
         error_msg = 'Error in Query 2: '+str(e)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Insert results into the Log
 
 # COMMAND ----------
 

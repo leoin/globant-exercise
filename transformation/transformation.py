@@ -1,4 +1,12 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC ## Prejob
+# MAGIC - Import functions and mappings
+# MAGIC - Get parameters
+# MAGIC - Define default values for the log
+
+# COMMAND ----------
+
 # MAGIC %run ../config/functions
 
 # COMMAND ----------
@@ -45,6 +53,13 @@ target_count = 0
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ## Read mapping
+# MAGIC - Get the ids mapping
+# MAGIC - Generate dynamically a string of the ids of target equals source that will be used for the merge
+
+# COMMAND ----------
+
 if(status != 'ERROR'):
     try:
 
@@ -71,6 +86,12 @@ if(status != 'ERROR'):
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ## Read Bronze table
+# MAGIC - Read bronze table filtering with the max process_date in order to get the last file data
+
+# COMMAND ----------
+
 if(status != 'ERROR'):
     try:
         
@@ -87,6 +108,12 @@ if(status != 'ERROR'):
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ## Schema and Columns
+# MAGIC - From silver get the columns and schema, this will be used to dynamically cast the values and select the columns we want to have in silver
+
+# COMMAND ----------
+
 if(status != 'ERROR'):
     try:
         
@@ -99,6 +126,11 @@ if(status != 'ERROR'):
     except Exception as e:
         status = 'ERROR'
         error_msg = 'Error reading columns and schema from silver: '+str(e)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Apply transformations
 
 # COMMAND ----------
 
@@ -134,6 +166,11 @@ if(status != 'ERROR'):
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ## Merge from Bronze to Silver
+
+# COMMAND ----------
+
 if(status != 'ERROR'):
     try:
       
@@ -155,6 +192,11 @@ if(status != 'ERROR'):
     except Exception as e:
         status = 'ERROR'
         error_msg = 'Error in Merge: '+str(e)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Insert results into the Log
 
 # COMMAND ----------
 

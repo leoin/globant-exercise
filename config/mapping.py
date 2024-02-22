@@ -3,6 +3,8 @@
 
 # COMMAND ----------
 
+# This mapping is to pass the structure per table in bronze in order to make 1 notebook
+
 custom_schema = {
     'jobs':StructType([
         StructField("id", StringType(), True),
@@ -22,6 +24,8 @@ custom_schema = {
 }
 
 # COMMAND ----------
+
+# This mapping is to pass the list of ids in silver notebook to do the merge
 
 ids_mapping = {
     'jobs':['id'],
