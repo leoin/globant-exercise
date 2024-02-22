@@ -1,4 +1,11 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC ## Prejob
+# MAGIC - Import functions
+# MAGIC - Get parameters
+
+# COMMAND ----------
+
 # MAGIC %run ../config/functions
 
 # COMMAND ----------
@@ -42,6 +49,13 @@ qc_table = {qc_table}
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ## Read all tables from Bronze and Silver
+# MAGIC - For the tables of bronze apply window function in order to get the last record in order to compare to the merge
+# MAGIC - For the tables of silver just read them
+
+# COMMAND ----------
+
 # Deduplicate data
 window_spec = Window.partitionBy("id").orderBy("id")
 
@@ -63,7 +77,12 @@ df_silv_hir = spark.table(silver_hired_employees_table)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 1. Check if there are duplicates in Silver
+# MAGIC ## QC Tests
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### 1. Check if there are duplicates in Silver
 
 # COMMAND ----------
 
@@ -87,7 +106,7 @@ insert_into_qc_table(data,columns,qc_table)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 2. Check if the counts between bronze to silver
+# MAGIC ### 2. Check if the counts between bronze to silver
 
 # COMMAND ----------
 
@@ -118,7 +137,7 @@ insert_into_qc_table(data,columns,qc_table)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 3. Check the transformations after bronze in silver
+# MAGIC ### 3. Check the transformations after bronze in silver
 
 # COMMAND ----------
 

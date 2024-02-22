@@ -1,4 +1,9 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC ## Get parameters
+
+# COMMAND ----------
+
 dbutils.widgets.removeAll()
 dbutils.widgets.text("hive_schema", "")
 

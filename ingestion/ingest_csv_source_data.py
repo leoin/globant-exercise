@@ -1,4 +1,12 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC ## Prejob
+# MAGIC - Import functions and mappings
+# MAGIC - Get parameters
+# MAGIC - Define default values for the log
+
+# COMMAND ----------
+
 # MAGIC %run ../config/functions
 
 # COMMAND ----------
@@ -45,6 +53,11 @@ target_count = 0
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ## Get schema from mapping
+
+# COMMAND ----------
+
 if(status != 'ERROR'):
     try:
         if(file in list(custom_schema.keys())):
@@ -56,6 +69,11 @@ if(status != 'ERROR'):
     except Exception as e:
         status = 'ERROR'
         error_msg = 'Error in schema: '+msg_error
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Read data Source and append in bronze table
 
 # COMMAND ----------
 
@@ -77,6 +95,11 @@ if(status != 'ERROR'):
         status = 'ERROR'
         error_msg = 'Error reading Source: '+str(e)
         target_count = 0
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Insert results into the Log
 
 # COMMAND ----------
 
