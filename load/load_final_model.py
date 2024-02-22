@@ -73,7 +73,6 @@ if(status != 'ERROR'):
             sum(if(quarter == 4,1,0)) as Q4
 
         from(
-
             select
                 h.*,
                 d.department,
@@ -138,7 +137,6 @@ if(status != 'ERROR'):
 
             )
 
-            where year(datetime) = '2021'
             group by department_id,department
             order by hired desc
         )
